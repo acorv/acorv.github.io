@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Canvas Primer - Example: Using ImageData</title>
+    <script src="snap.svg-min.js"></script>
+    <script type="text/javascript"><!--
+
+  var maxRadius = 10;
+  var dimx=50; 
+  var dimy=30;
+  var circles = [];
+  var imgVals = [];
+  var canvas = document.createElement('canvas');
+  var p=0.5;
+
+window.addEventListener('mousemove', function (event) {
+	p=(event.pageY/window.innerHeight)+0.1;
+});
+window.addEventListener('load', function () {
+  var s = Snap(1200, 1200);
+    
+  for (i=0; i<dimx; i++) {
+        var line=[];
+	for (j=0; j<dimy; j++) {
+		line.push(s.circle(i*((maxRadius*2)-2)+maxRadius, j*((maxRadius*2)-2)+maxRadius, 1));
+	}
+        circles.push(line);
+  }
+
+  var imgObj = new Image();
+  imgObj.onload = function() {
+        canvas.width=imgObj.width;
+	canvas.height=imgObj.height;
+
+        var context = canvas.getContext('2d');
+
+        context.drawImage(imgObj, 0, 0);
+        var stepx= Math.floor(imgObj.width/dimx);
+        var stepy= Math.floor(imgObj.height/dimy);
+
+	for (i=0; i<dimx; i++) {	
+		var line=[];
+		for (j=0; j<dimy; j++) {
+			var avg = average(Math.floor(i*stepx),Math.floor(j*stepy),stepx, stepy,context);
+			var val=maxRadius-(avg/255)*(maxRadius)+1;	
+			line.push(val);
+		}
+		imgVals.push(line);
+	}
+        setTimeout(function(){showImage()},0);
+	
+
+
+  };
+  imgObj.src = 'monalisa.jpg';
+
+
+
+}, false);
+
+function showImage() {
+/*	  for (i=0; i<dimx; i++) {
+		for (j=0; j<dimy; j++) {
+			circles[i][j].animate({r: imgVals[i][j]}, Math.floor((Math.random() * 2000))+2000);
+		}
+	  }
+          setTimeout(function(){showRandom()},3000);*/
+	  for (i=0; i<dimx; i++) {
+		for (j=0; j<dimy; j++) {
+			showDot(i,j);
+		}
+	  }
+}
+
+function showDot(i,j) {
+ var t=Math.floor((Math.random() * 1000))+1000;
+ var val=(Math.random()>p)? Math.floor((Math.random() * maxRadius))+1:imgVals[i][j]-1+Math.floor(Math.random() * 3);
+ circles[i][j].animate({r: val}, t, mina.bounce);
+ var show = function(i,j) {
+     return function() {
+	showDot(i,j);
+      }
+    }(i, j);
+ setTimeout(show,t);
+}
+
+function showRandom() {
+	  for (i=0; i<dimx; i++) {
+		for (j=0; j<dimy; j++) {
+			circles[i][j].animate({r: Math.floor((Math.random() * maxRadius))+1}, Math.floor((Math.random() * 2000))+2000);
+			
+		}
+	  }
+          setTimeout(function(){showImage()},3000);
+}
+
+function average(x, y, sx, sy, context) {
+
+  imgd = context.getImageData(x, y, sx, sy);
+  var pix = imgd.data;
+  avg=0;
+  for (var i = 0, n = pix.length; i < n; i += 4) {
+    avg+=pix[i];
+  }
+  avg=avg/(pix.length/4);
+//  alert(x+","+y+","+sx+","+sy+"="+avg);
+
+  return avg;
+}
+    // --></script>
+  </head>
+  <body>
+  </body>
+</html>
+
