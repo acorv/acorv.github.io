@@ -2,13 +2,13 @@
 	var days=["Sabado", "Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
 
 	var formatDate = function(date){
-		return days[date.getDay()]+", "+date.getDate()+" de " + months[date.getMonth()] + " de "+date.getFullYear();
+		return days[date.getDay()]+", "+date.getDate()+" de " + months[date.getMonth()] + " de "+(date.getFullYear()-1);
 	}
 
 	var getDateFromDayNum = function(dayNum, year){
 	    var date = new Date();
 	    if(year){
-		date.setFullYear(year);
+				date.setFullYear(year);
 	    }
 	    date.setMonth(0);
 	    date.setDate(0);
@@ -17,6 +17,4 @@
 	    var dayNumMilli = dayNum * dayMilli;
 	    date.setTime(timeOfFirst + dayNumMilli);
 	    return date;
-	}	
-
-
+	}

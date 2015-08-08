@@ -3,58 +3,62 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>TP InfoVis ITBA 2015/I</title>
+  <title>TP InfoVis ITBA 2015/1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
   <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-    <style>
-	html { 
-	  color: #333;
-	  font-family: sans-serif;
-	  font-weight: 100;
-	  line-height: 1.5em;
-	  text-align: center;
-	}
-	h1, h2 { text-align:center; }
-	h2 { font-size:1.2em; margin-top:20px; margin-bottom:10px; }
-	.wrapper { display:none ; width:920px; position:relative; margin:auto; max-width:100%; }
-	.left-container { width:400px;}
-	.map-container {  width:400px; height:350px; border:1px solid #DDDDDD; float: left; margin-right:30px; }
-	.count-container {  width:400px; margin-top:20px; border:1px solid #DDDDDD; float: left; margin-right:30px; }
-	.right-container { width:500px; margin-left:418px; border:1px solid #DDDDDD;}
-	.heatmap { width:100%; height:100%; }
-	.fa {color: #888888;}	
-	#date {	  font-size: 13pt; display : inline-block; min-width: 250px;}
-	#time {   font-size: 13pt;  display : inline-block; min-width: 170px;}
-	.subtitle {font-size: 11pt;}
+  <style>
+  	html {
+  	  color: #333;
+  	  font-family: sans-serif;
+  	  font-weight: 100;
+  	  line-height: 1.5em;
+  	  text-align: center;
+  	}
+    label {
+       font-size:0.7em;
+    }
+  	h1, h2 { text-align:center; }
+  	h2 { font-size:1.2em; margin-top:20px; margin-bottom:10px; }
+  	.wrapper { display:none ; width:920px; position:relative; margin:auto; max-width:100%; }
+  	.left-container { width:400px;}
+  	.map-container {  width:400px; height:350px; border:1px solid #DDDDDD; float: left; margin-right:30px; }
+  	.count-container {  width:400px; margin-top:20px; border:1px solid #DDDDDD; float: left; margin-right:30px; }
+  	.right-container { width:500px; margin-left:418px; border:1px solid #DDDDDD;}
+  	.heatmap { width:100%; height:100%; }
+  	.fa {color: #888888;}
+  	#date {	  font-size: 13pt; display : inline-block; min-width: 250px;}
+  	#time {   font-size: 13pt;  display : inline-block; min-width: 170px;}
+  	.subtitle {font-size: 11pt;}
   </style>
 </head>
 <body>
   <div class="loading">
-	<h1>Cargando datos...</h1>
+	   <h1>Cargando datos...</h1>
   </div>
   <div class="wrapper">
-	<div class="left-container">
-		<div class="map-container">
-			<div class="heatmap" id="map-canvas">
-			</div>
-		</div>
-		<div class="count-container">
-			<div id="countChartContainer">
-			</div>  
-		</div>  
-	</div>
-	<div class="right-container">
-		<p>
-			<i id="btnDayBefore" class="fa fa-arrow-circle-left"></i>&nbsp;	<span  id="date"></span>&nbsp;<i id="btnDayAfter" class="fa fa-arrow-circle-right"></i><br/>
-			<i id="btnHourBefore" class="fa fa-arrow-circle-left"></i>&nbsp;<span  id="time"></span>&nbsp;<i id="btnHourAfter" class="fa fa-arrow-circle-right"></i>
-		</p>
-		<div id="addressChartContainer">
-			<!--<p class="subtitle">10 esquinas más buscadas</p>-->
-		</div>  
-	</div>  
+  	<div class="left-container">
+  		<div class="map-container">
+  			<div class="heatmap" id="map-canvas">
+  			</div>
+        <label> <input type="checkbox" id="dayMapCheckbox" value="1" />HeatMap diario</label>
+  		</div>
+  		<div class="count-container">
+  			<div id="countChartContainer">
+  			</div>
+  		</div>
+  	</div>
+  	<div class="right-container">
+  		<p>
+  			<i id="btnDayBefore" class="fa fa-arrow-circle-left"></i>&nbsp;	<span  id="date"></span>&nbsp;<i id="btnDayAfter" class="fa fa-arrow-circle-right"></i><br/>
+  			<i id="btnHourBefore" class="fa fa-arrow-circle-left"></i>&nbsp;<span  id="time"></span>&nbsp;<i id="btnHourAfter" class="fa fa-arrow-circle-right"></i>
+  		</p>
+  		<div id="addressChartContainer">
+  		</div>
+  	</div>
   </div>
+
   <script src="http://d3js.org/d3.v3.min.js"></script>
   <script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script>
   <script src="js/heatmap.min.js"></script>
@@ -63,8 +67,6 @@
   <script src="js/locations.js"></script>
   <script src="js/hourly.js"></script>
   <script src="js/map.js"></script>
-   
-  </script>
 
 </body>
 </html>

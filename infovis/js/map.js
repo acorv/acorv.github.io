@@ -1,36 +1,29 @@
 window.onload = function() {
-	d3.select(".loading").style("display","none");
+
+  d3.select(".loading").style("display","none");
 	d3.select(".wrapper").style("display","block");
 
-        var baseLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-            attribution: '',
-            maxZoom: 18
-          }
-        );
-        var cfg = {
-          // radius should be small ONLY if scaleRadius is true (or small radius is intended)
-          "radius": 0.005,
-          "maxOpacity": .8, 
-          // scales the radius based on map zoom
-          "scaleRadius": true, 
-          // if set to false the heatmap uses the global maximum for colorization
-          // if activated: uses the data maximum within the current map boundaries 
-          //   (there will always be a red spot with useLocalExtremas true)
-          "useLocalExtrema": false,
-          // which field name in your data represents the latitude - default "lat"
-          latField: 'lat',
-          // which field name in your data represents the longitude - default "lng"
-          lngField: 'lng',
-          // which field name in your data represents the data value - default "value"
-          valueField: 'count'
-        };
-        var heatmapLayer = new HeatmapOverlay(cfg);
 
-        var map = new L.Map('map-canvas', {
-          center: new L.LatLng(-34.62, -58.42),
-          zoom: 11,
-          layers: [baseLayer,heatmapLayer]
-        });
+  var baseLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution: '',
+      maxZoom: 18
+    }
+  );
+  var cfg = {
+    "radius": 0.005,     // radius should be small ONLY if scaleRadius is true (or small radius is intended)
+    "maxOpacity": .8,
+    "scaleRadius": true,     // scales the radius based on map zoom
+    "useLocalExtrema": true,     // if set to false the heatmap uses the global maximum for colorization if activated:
+    latField: 'lat',
+    lngField: 'lng',
+    valueField: 'count'
+  };
+  var heatmapLayer = new HeatmapOverlay(cfg);
+  var map = new L.Map('map-canvas', {
+    center: new L.LatLng(-34.62, -58.42),
+    zoom: 11,
+    layers: [baseLayer,heatmapLayer]
+  });
 
 
 
@@ -43,7 +36,7 @@ window.onload = function() {
 	x.addOrderRule("Hora");
 	x.title="";
 	y.title="";
-	var series=countChart.addSeries(null, dimple.plot.bar);	
+	var series=countChart.addSeries(null, dimple.plot.bar);
 	series.afterDraw = function (shape, data) {
 		var s = d3.select(shape);
 		if (data.x==currentTimeOfDay) {
@@ -51,6 +44,12 @@ window.onload = function() {
 		} else {
 			s.style('fill', d3.rgb(128, 177, 211));
 		}
+		s.on("click", function () {
+			if (data.x!=currentTimeOfDay) {
+				generalIndex+=(data.x-currentTimeOfDay);
+				update();
+		  }
+		});
 	}
 
 
@@ -64,35 +63,35 @@ window.onload = function() {
 	var y1 = addressChart.addCategoryAxis("y", "Esquina");
 	y1.addOrderRule("Consultas");
 	y1.title="";
-	addressChart.addSeries(null, dimple.plot.bar);	
+	addressChart.addSeries(null, dimple.plot.bar);
 
 
  	var  generalIndex=0;
  	var  currentTimeOfDay=0;
 
 
-	d3.select("#btnDayAfter").on("click", 
+	d3.select("#btnDayAfter").on("click",
 		function(d,i){
 			generalIndex+=24;
 			if (generalIndex>=hourly.length) generalIndex=hourly.length-1;
 			update();
 		}
 	);
-	d3.select("#btnDayBefore").on("click", 
+	d3.select("#btnDayBefore").on("click",
 		function(d,i){
 			generalIndex-=24;
 			if (generalIndex<0) generalIndex=0;
 			update();
 		}
 	);
-	d3.select("#btnHourBefore").on("click", 
+	d3.select("#btnHourBefore").on("click",
 		function(d,i){
 			generalIndex-=1;
 			if (generalIndex<0) generalIndex=0;
 			update();
 		}
 	);
-	d3.select("#btnHourAfter").on("click", 
+	d3.select("#btnHourAfter").on("click",
 		function(d,i){
 			generalIndex+=1;
 			if (generalIndex>=hourly.length) generalIndex=hourly.length-1;
@@ -100,10 +99,27 @@ window.onload = function() {
 		}
 	);
 
+  d3.select("#dayMapCheckbox").on("click", function () {
+    update();
+  })
 
 	update = function(){
 
-   		heatmapLayer.setDataFunction({ max: 100, data: hourly[""+generalIndex].data }, function(d) { 
+    var dayMap=d3.select("#dayMapCheckbox").node().checked;
+    var mapdata=[];
+    if (dayMap) {
+      var daydata=[];
+      for (j=Math.max(0,generalIndex-24); j<Math.min(hourly.length,generalIndex+24);j++) {
+  			if (hourly[""+j].date==hourly[""+generalIndex].date) {
+  				mapdata=mapdata.concat(hourly[""+j].data);
+  			}
+  		}
+    } else {
+      mapdata=hourly[""+generalIndex].data;
+    }
+
+    heatmapLayer.setDataFunction({ max: 100, data: mapdata },
+    function(d) {
 			return {"lat":locations[d[0]][0],"lng":locations[d[0]][1],"count":d[1]};
 		});
 
@@ -117,24 +133,22 @@ window.onload = function() {
 		var top=new Array();
 		for (j=0; j<topCount;j++) {
 			var data = topdata[j];
-			top.push({"Esquina":locations[data[0]][2], "Consultas":data[1]});			
+			top.push({"Esquina":locations[data[0]][2], "Consultas":data[1]});
 		}
 		addressChart.data=top;
 		addressChart.draw(500);
 
-
 		var frecuencies=new Array();
-		for (j=Math.max(0,generalIndex-24); j<Math.min(hourly.length,generalIndex+24);j++) {
+    for (j=Math.max(0,generalIndex-24); j<Math.min(hourly.length,generalIndex+24);j++) {
 			if (hourly[""+j].date==hourly[""+generalIndex].date) {
-				frecuencies.push({"Hora":hourly[""+j].time, "Consultas":hourly[""+j].count});			
+				frecuencies.push({"Hora":hourly[""+j].time, "Consultas":hourly[""+j].count});
 			}
 		}
 		countChart.data=frecuencies;
-	        countChart.draw(200);
+	  countChart.draw(200);
+
 	}
 
 	update();
 
-  }
-
-
+}
