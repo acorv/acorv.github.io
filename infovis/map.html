@@ -42,7 +42,6 @@
   		<div class="map-container">
   			<div class="heatmap" id="map-canvas">
   			</div>
-        <label> <input type="checkbox" id="dayMapCheckbox" value="1" />HeatMap diario</label>
   		</div>
   		<div class="count-container">
   			<div id="countChartContainer">
@@ -52,7 +51,10 @@
   	<div class="right-container">
   		<p>
   			<i id="btnDayBefore" class="fa fa-arrow-circle-left"></i>&nbsp;	<span  id="date"></span>&nbsp;<i id="btnDayAfter" class="fa fa-arrow-circle-right"></i><br/>
-  			<i id="btnHourBefore" class="fa fa-arrow-circle-left"></i>&nbsp;<span  id="time"></span>&nbsp;<i id="btnHourAfter" class="fa fa-arrow-circle-right"></i>
+  			<span class="timecontrol">
+          <i id="btnHourBefore" class="fa fa-arrow-circle-left"></i>&nbsp;<span id="time"></span>&nbsp;<i id="btnHourAfter" class="fa fa-arrow-circle-right"></i><br/>
+        </span>
+        <label> <input type="checkbox" id="dayDataCheckbox" value="1" />Usar datos diarios</label>
   		</p>
   		<div id="addressChartContainer">
   		</div>
@@ -62,6 +64,7 @@
   <script src="http://d3js.org/d3.v3.min.js"></script>
   <script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script>
   <script src="js/heatmap.min.js"></script>
+  <script src="js/underscore-min.js"></script>
   <script src="js/leaflet-heatmap.js"></script>
   <script src="js/dateutils.js"></script>
   <script src="js/locations.js"></script>

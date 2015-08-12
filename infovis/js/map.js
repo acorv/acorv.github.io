@@ -39,7 +39,8 @@ window.onload = function() {
 	var series=countChart.addSeries(null, dimple.plot.bar);
 	series.afterDraw = function (shape, data) {
     var s = d3.select(shape);
-		if (data.x==currentTimeOfDay) {
+    var useDailyData=d3.select("#dayDataCheckbox").node().checked;
+		if (data.x==currentTimeOfDay && !useDailyData) {
 			s.style('fill', d3.rgb(38, 107, 211));
 		} else {
 			s.style('fill', d3.rgb(128, 177, 211));
@@ -53,12 +54,13 @@ window.onload = function() {
 	}
 
 
-	var addressSvg = dimple.newSvg("#addressChartContainer", 480, 500);
+	var addressSvg = dimple.newSvg("#addressChartContainer", 480, 475);
 	var addressChart = new dimple.chart(addressSvg);
-	addressChart.setBounds(250, 10, 200, 450)
+	addressChart.setBounds(250, 10, 200, 430)
 	addressChart.ease = "quad";
 	var x1 = addressChart.addMeasureAxis("x", "Consultas");
 	x1.tickFormat="d";
+  x1.ticks = 5;
 	x1.title="";
 	var y1 = addressChart.addCategoryAxis("y", "Esquina");
 	y1.addOrderRule("Consultas");
@@ -67,7 +69,6 @@ window.onload = function() {
   addressSeries.afterDraw = function (shape, data, i) {
     var s = d3.select(shape);
     s.on("click", function () {
-      //alert(addressChart.data[i].lat +","+ addressChart.data[i].lng );
       var esquina=addressChart.data.filter(function(value) {return data.y==value.Esquina})[0];
       var marker = L.marker([esquina.lat, esquina.lng ], {
                 title: esquina.Esquina,
@@ -117,15 +118,20 @@ window.onload = function() {
 		}
 	);
 
-  d3.select("#dayMapCheckbox").on("click", function () {
+  d3.select("#dayDataCheckbox").on("click", function () {
     update();
   })
 
 	update = function(){
 
-    var dayMap=d3.select("#dayMapCheckbox").node().checked;
+    d3.select("#date").text(formatDate(getDateFromDayNum(hourly[""+generalIndex].date), 2014));
+    d3.select("#time").text(hourly[""+generalIndex].time+":00 hs a "+(hourly[""+generalIndex].time+1)+":00 hs");
+
+
+    var useDailyData=d3.select("#dayDataCheckbox").node().checked;
     var mapdata=[];
-    if (dayMap) {
+    if (useDailyData) {
+      d3.select(".timecontrol").style("visibility","hidden");
       var daydata=[];
       for (j=Math.max(0,generalIndex-24); j<Math.min(hourly.length,generalIndex+24);j++) {
   			if (hourly[""+j].date==hourly[""+generalIndex].date) {
@@ -133,6 +139,7 @@ window.onload = function() {
   			}
   		}
     } else {
+      d3.select(".timecontrol").style("visibility","visible");
       mapdata=hourly[""+generalIndex].data;
     }
 
@@ -141,14 +148,27 @@ window.onload = function() {
 			return {"lat":locations[d[0]][0],"lng":locations[d[0]][1],"count":d[1]};
 		});
 
-		d3.select("#date").text(formatDate(getDateFromDayNum(hourly[""+generalIndex].date), 2014));
-		d3.select("#time").text(hourly[""+generalIndex].time+":00 hs a "+(hourly[""+generalIndex].time+1)+":00 hs");
-
 		currentTimeOfDay=hourly[""+generalIndex].time;
 
+    var dailyFrecuencies=new Array();
+    var dailyCorners=new Array();
+    for (j=Math.max(0,generalIndex-24); j<Math.min(hourly.length,generalIndex+24);j++) {
+			if (hourly[""+j].date==hourly[""+generalIndex].date) {
+				dailyFrecuencies.push({"Hora":hourly[""+j].time, "Consultas":hourly[""+j].count});
+        if (useDailyData) dailyCorners=dailyCorners.concat(hourly[""+j].data);
+			}
+		}
+		countChart.data=dailyFrecuencies;
+	  countChart.draw(200);
+
+
+    var groupedDailyCorners=_.groupBy(dailyCorners, function (v){ return v[0]});
+    var summarizedDailyCorners=_.sortBy(_.pairs(_.mapObject(groupedDailyCorners, function (v, k) {return d3.sum(_.map(v, function(v2) { return v2[1]}))})), function(v3){return -v3[1]});
+
 		var topCount=30;
-		var topdata=hourly[""+generalIndex].data.slice(0,topCount);
-		var top=new Array();
+    var topdata=useDailyData?summarizedDailyCorners.slice(0,topCount):hourly[""+generalIndex].data.slice(0,topCount);
+
+    var top=new Array();
 		for (j=0; j<topCount;j++) {
 			var data = topdata[j];
 			top.push({"Esquina":locations[data[0]][2], "Consultas":data[1], "lat": locations[data[0]][0], "lng": locations[data[0]][1]});
@@ -156,14 +176,6 @@ window.onload = function() {
 		addressChart.data=top;
 		addressChart.draw(500);
 
-		var frecuencies=new Array();
-    for (j=Math.max(0,generalIndex-24); j<Math.min(hourly.length,generalIndex+24);j++) {
-			if (hourly[""+j].date==hourly[""+generalIndex].date) {
-				frecuencies.push({"Hora":hourly[""+j].time, "Consultas":hourly[""+j].count});
-			}
-		}
-		countChart.data=frecuencies;
-	  countChart.draw(200);
 
 	}
 
