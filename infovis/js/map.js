@@ -61,17 +61,18 @@ window.onload = function() {
 	x1.tickFormat="d";
 	x1.title="";
 	var y1 = addressChart.addCategoryAxis("y", "Esquina");
-	y1.addOrderRule(true);
+	y1.addOrderRule("Consultas");
 	y1.title="";
 	var addressSeries=addressChart.addSeries(null, dimple.plot.bar);
-  addressSeries.afterDraw = function (shape, data, i,d) {
+  addressSeries.afterDraw = function (shape, data, i) {
     var s = d3.select(shape);
     s.on("click", function () {
       //alert(addressChart.data[i].lat +","+ addressChart.data[i].lng );
-      var marker = L.marker([addressChart.data[i].lat, addressChart.data[i].lng ], {
-                title: addressChart.data[i].Esquina,
+      var esquina=addressChart.data.filter(function(value) {return data.y==value.Esquina})[0];
+      var marker = L.marker([esquina.lat, esquina.lng ], {
+                title: esquina.Esquina,
                 riseOnHover: true,
-      }).bindPopup(addressChart.data[i].Esquina);
+      }).bindPopup(esquina.Esquina);
       map.addLayer(marker);
       marker.openPopup();
       marker.on("click", function(e) {
