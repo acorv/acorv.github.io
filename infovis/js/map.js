@@ -38,7 +38,7 @@ window.onload = function() {
 	y.title="";
 	var series=countChart.addSeries(null, dimple.plot.bar);
 	series.afterDraw = function (shape, data) {
-		var s = d3.select(shape);
+    var s = d3.select(shape);
 		if (data.x==currentTimeOfDay) {
 			s.style('fill', d3.rgb(38, 107, 211));
 		} else {
@@ -63,7 +63,24 @@ window.onload = function() {
 	var y1 = addressChart.addCategoryAxis("y", "Esquina");
 	y1.addOrderRule("Consultas");
 	y1.title="";
-	addressChart.addSeries(null, dimple.plot.bar);
+	var addressSeries=addressChart.addSeries(null, dimple.plot.bar);
+  addressSeries.afterDraw = function (shape, data, i) {
+    var s = d3.select(shape);
+    s.on("click", function () {
+      //alert(addressChart.data[i].lat +","+ addressChart.data[i].lng );
+      var marker = L.marker([addressChart.data[i].lat, addressChart.data[i].lng ], {
+                title: addressChart.data[i].Esquina,
+                riseOnHover: true,
+      }).bindPopup(addressChart.data[i].Esquina);
+      map.addLayer(marker);
+      marker.openPopup();
+      marker.on("click", function(e) {
+        map.removeLayer(e.target);
+      });
+
+    });
+  };
+
 
 
  	var  generalIndex=0;
@@ -133,7 +150,7 @@ window.onload = function() {
 		var top=new Array();
 		for (j=0; j<topCount;j++) {
 			var data = topdata[j];
-			top.push({"Esquina":locations[data[0]][2], "Consultas":data[1]});
+			top.push({"Esquina":locations[data[0]][2], "Consultas":data[1], "lat": locations[data[0]][0], "lng": locations[data[0]][1]});
 		}
 		addressChart.data=top;
 		addressChart.draw(500);
