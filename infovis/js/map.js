@@ -61,10 +61,10 @@ window.onload = function() {
 	x1.tickFormat="d";
 	x1.title="";
 	var y1 = addressChart.addCategoryAxis("y", "Esquina");
-	y1.addOrderRule("Consultas");
+	y1.addOrderRule(true);
 	y1.title="";
 	var addressSeries=addressChart.addSeries(null, dimple.plot.bar);
-  addressSeries.afterDraw = function (shape, data, i) {
+  addressSeries.afterDraw = function (shape, data, i,d) {
     var s = d3.select(shape);
     s.on("click", function () {
       //alert(addressChart.data[i].lat +","+ addressChart.data[i].lng );
