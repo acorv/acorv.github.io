@@ -6,16 +6,21 @@ h1 {
   text-align: center;
 }
 body {
-  font: 14px sans-serif;
+  font: 14px monospace;
+  color: white;
+  background-color: #111;
 }
 
 svg {
   font: 10px sans-serif;
+  stroke: none;
+
 }
 
 
 .price {
   clip-path: url(#clip);
+  stroke: none;
 }
 
 .line {
@@ -34,18 +39,28 @@ svg {
   fill: #FF9900;
 }
 
-
-
 .axis path,
 .axis line {
   fill: none;
-  stroke: #EEE;
+  stroke: #444;
   shape-rendering: crispEdges;
 }
+.tick {
+  font: 10px sans-serif;
+  stroke: #AAA;
+  fill: #AAA;
+}
+.tick text {
+  stroke-width: .1;
+}
 
+.hoverline {
+
+  stroke: #FFF;
+}
 .brush .extent {
-  stroke: #fff;
-  fill-opacity: .25;
+  stroke: #444;
+  fill-opacity: .50;
   shape-rendering: crispEdges;
 }
 rect.pane {
@@ -56,47 +71,66 @@ rect.pane {
 div#params {
     text-align: center;
     position:absolute;
-    left: 40%;
-    top: 20px;
+    right: 2%;
+    top: 15px;
 }
 
 div#main {
     width: 100%;
-    height: 95vh;
+    height: 97vh;
 }
 div#chart {
+    position: relative;
     width: 75%;
     height: 100%;
     float: left;
 }
 div#book {
+    position: relative;
     margin-left: 75%;
     height: 100%;
 }
 
 div#logo {
  position:absolute;
- opacity: 0.4;
- top:10px;
+ opacity: .8;
+ top:5px;
  left:50px;
+}
+
+div.tooltip {
+  background-color:#FFF;
+  color: #000;
+  position:absolute;
+  z-index :10;
+}
+.contract{
+  font-family: monospace;
+}
+
+.date {
+  padding: 0;
+  border: none;
+  font-size: 12px;
+  background: #eee;
 }
 
 </style>
 <body>
 <title>Order book</title>
-<div id="logo">
-  <img src="logo.png"/>
-</div>
-<div id="params">
-  <select>
-    <option>DONov14</option>
-    <option>DODic14</option>
-  </select>
-  <input type="text" value="10/11/2015"/>
-  <span id="time"></span>
-</div>
 <div id="main">
-    <div id="chart"></div>
+    <div id="chart">
+    <div id="logo">
+      <img src="logo-inv.png"/>
+    </div>
+    <div id="params">
+      <select class="contract">
+        <option>I.MERVDic15</option>
+      </select>
+      <input class="date" type="date" value="2015-11-02"/>
+      <span id="time"></span>
+    </div>
+  </div>
     <div id="book">
     </div>
 </div>
@@ -104,32 +138,37 @@ div#logo {
 <script src="d3.v3.min.js"></script>
 <script src="order-book-history.js"></script>
 <script src="order-book.js"></script>
+<script src="I.MERVDic15.log"></script>
 <script type="text/javascript">
 
 
 //{"timestamp":"1444764425716","symbol":"DODic11A","BIDS":[[151001,30,4.0,10],[151007,40,4.0,10],[151008,50,4.0,1]],"OFFERS":[[151003,41,4.1,11]],"BIDS_AGREGADOS":[[4.0,21]],"OFFERS_AGREGADOS":[[4.1,11]]}
 
 var timeformat = d3.time.format("%H:%M:%S.%L");
-var data=[];
+
+
+
+/*var data=[];
 var price=15;
 var tick=.1
 var t=1438868584836;
-for (var i=0; i<500; i++) {
+for (var i=0; i<100; i++) {
 
     var priceVariation=Math.random()>0.5?(Math.random()>0.5?tick:-tick):0;
-    var bidCount=Math.floor(Math.random()*5)+1;
-    var offerCount=Math.floor(Math.random()*5)+1;
+    var bidCount=Math.floor(Math.random()*1)+5;
+    var offerCount=Math.floor(Math.random()*1)+5;
 
     var bids =[];
     var bidorders=[];
     price+=priceVariation;
 
     var size=Math.floor(Math.random()*50)*100;
+    var totalSize=0;
+
     for (var j=0; j<bidCount; j++) {
       var p=price-((j+1)*tick);
       p=Number(p.toFixed(2));
       var size=(Math.floor(Math.random()*5)+1)*100;
-      var totalSize=0;
       var ordercount=Math.floor(Math.random()*10)+1;
       var orders=[];
       for (var h=0; h<ordercount; h++) {
@@ -144,11 +183,12 @@ for (var i=0; i<500; i++) {
     var offers = [];
     var offerorders=[];
     size=Math.floor(Math.random()*50)*100;
+    var totalSize=0;
+
     for (var j=0; j<offerCount; j++) {
       var p=price+((j+1)*tick);
       p=Number(p.toFixed(2));
       var size=(Math.floor(Math.random()*5)+1)*100;
-      var totalSize=0;
       var ordercount=Math.floor(Math.random()*10)+1;
       var orders=[];
       for (var h=0; h<ordercount; h++) {
@@ -167,8 +207,14 @@ for (var i=0; i<500; i++) {
 
 console.log("Created data...");
 console.log(JSON.stringify(data));
+*/
 
-var limit=1000;
+for (var i=0; i<data.length; i++) {
+  data[i].timestamp=new Date(data[i].timestamp);
+}
+
+
+var limit=data.length;
 update_chart(data.slice(0,limit), data.slice(0,limit));
 
 function chartclick(data) {
@@ -183,6 +229,7 @@ function chartclick(data) {
         side: d.side,
         size: d.orders[i].size,
         id: d.orders[i].id,
+        account: d.orders[i].account,
         y0: y0,
         y1: y0 += +d.orders[i++].size};
       });

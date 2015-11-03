@@ -11,9 +11,13 @@ var chart_parseDate = d3.time.format("%b %Y").parse;
 var chart_x = d3.time.scale().range([0, chart_width]),
     chart_x2 = d3.time.scale().range([0, chart_width]),
     chart_y = d3.scale.linear().range([chart_height, 0]),
-    chart_volumeScale = d3.scale.linear().range([chart_height2/2-2, 0]);
+    chart_volumeScaleBids = d3.scale.linear().range([chart_height2/2-2, 0]);
+    chart_volumeScaleOffers = d3.scale.linear().range([chart_height2/2-2, 0]);
 
 var data_index=0;
+
+var tick=10;
+
 
 function chart_xAxis2() {return d3.svg.axis().scale(chart_x2).orient("bottom")};
 function chart_xAxis() {return d3.svg.axis().scale(chart_x).orient("bottom").ticks(15)};
@@ -28,7 +32,7 @@ var bidVolumes = d3.svg.area()
     .x(function(d) { return chart_x2(d.timestamp); })
     .y1(chart_height2/2)
     .y0(function(d) {
-	return 2+chart_height2-chart_volumeScale(d3.sum(d.offers,
+	return 2+chart_height2-chart_volumeScaleBids(d3.sum(d.bids,
 		function (e,i){return e[1];
 	}))});
 
@@ -37,7 +41,7 @@ var offerVolumes = d3.svg.area()
       .x(function(d) { return chart_x2(d.timestamp); })
       .y0(chart_height2/2-2)
       .y1(function(d) {
-  	return chart_volumeScale(d3.sum(d.bids,
+  	return chart_volumeScaleOffers(d3.sum(d.offers,
   		function (e,i){return e[1];
   	}))});
 
@@ -79,7 +83,7 @@ var hoverRect = hoverLayer.append("rect")
 var hoverLine = hoverLayer.append("line")
 				.attr("x1", chart_margin.left).attr("x2", chart_margin.left)
 				.attr("y1", chart_margin.top).attr("y2", chart_height+chart_margin.top)
-        .style("stroke","#000")
+        .attr("class", "hoverline")
         .style("visibility","hidden")
         .call(chartzoom);
 
@@ -96,7 +100,7 @@ hoverRect.on("click",function() {
   while (data[i].timestamp<hoverTimestamp) {
      i++;
   }
-  data_index = i;
+  data_index = i-1;
   chartclick(data[data_index]);
 });
 
@@ -220,17 +224,20 @@ function updateBrush() {
 }
 function redraw() {
 
-  var miny=d3.min(data.map(function(d) {
-    if (d.timestamp<chart_x.domain()[0] || d.timestamp>chart_x.domain()[1]) {
-      return null;
-    }
-    return d.bids[d.bids.length-1][0];}))-1;
   var maxy=d3.max(data.map(function(d) {
     if (d.timestamp<chart_x.domain()[0] || d.timestamp>chart_x.domain()[1]) {
       return null;
     }
-    return d.offers[d.offers.length-1][0];}))+1;
-  chart_y.domain([miny, maxy]); //Hay qye buscar max y min en el dominio de x
+    return d.offers.length>0?d.offers[d.offers.length-1][0]:0;}
+  ));
+  var miny=d3.min(data.map(function(d) {
+    if (d.timestamp<chart_x.domain()[0] || d.timestamp>chart_x.domain()[1]) {
+      return null;
+    }
+    return d.bids.length>0?d.bids[d.bids.length-1][0]:maxy;}
+  ));
+
+  chart_y.domain([miny-tick, maxy+tick]); //Hay qye buscar max y min en el dominio de x
 
   priceLayer.selectAll(".price").attr("d", createPriceArea());
   chartLayer.select(".x.axis").call(chart_xAxis().tickSize(-chart_height, 0, 0));
@@ -246,8 +253,12 @@ function createPriceArea() {
     	.x(function(d,i) {
 		      return chart_x(d.timestamp);
 	     })
-	      .y0(function(d) { return chart_y(d.priceFrom);})
-	      .y1(function(d) { return chart_y(d.priceTo); });
+	      .y0(function(d) {
+          return chart_y(d.priceFrom);
+        })
+	      .y1(function(d) {
+          return chart_y(d.priceTo);
+        });
 
   }
 
@@ -270,22 +281,23 @@ function createAreas(bookSideData,timestampFrom, timestampTo, tick, scale ) {
 
 function update_chart(data, newdata) {
   console.log("Updating...");
-  var maxOfferPrice = d3.max(data.map(function(d) { return d.offers[d.offers.length-1][0]; }))
-  var minBidPrice = d3.min(data.map(function(d) { return d.bids[d.bids.length-1][0]; }))
-  var maxOfferSize = d3.max(data.map(function(d) { return d.offers[d.offers.length-1][1]; }))
-  var maxBidSize = d3.max(data.map(function(d) { return d.bids[d.bids.length-1][1]; }))
-  var minOfferSize = d3.min(data.map(function(d) { return d.offers[d.offers.length-1][1]; }))
-  var minBidSize = d3.min(data.map(function(d) { return d.bids[d.bids.length-1][1]; }))
+  var maxOfferPrice = d3.max(data.map(function(d) { return d.offers.length>0?d.offers[d.offers.length-1][0]:0; }))
+  var minBidPrice = d3.min(data.map(function(d) { return d.bids.length>0?d.bids[d.bids.length-1][0]:maxOfferPrice; }))
+  var maxOfferSize = d3.max(data.map(function(d) { return d3.max(d.offers.map(function(f) {return f[1];})); }))
+  var maxBidSize = d3.max(data.map(function(d) { return d3.max(d.bids.map(function(f) {return f[1];})); }))
+  var minOfferSize = d3.min(data.map(function(d) { return d3.min(d.offers.map(function(f) {return f[1];})); }))
+  var minBidSize = d3.min(data.map(function(d) { return d3.min(d.bids.map(function(f) {return f[1];})); }))
 
   var minSize = d3.min([minOfferSize, minBidSize]);
   var maxSize = d3.max([maxOfferSize, maxBidSize]);
 
-  var colorScale = d3.scale.linear().domain([minSize, maxSize]).range(['#5696BC','#e04836'])
+  var colorScale = d3.scale.linear().domain([minSize, (minSize+maxSize)/2, maxSize]).range(['#0000ff', '#00ff00','#ff0000'])
 
   chart_x.domain(d3.extent(data.map(function(d) { return d.timestamp; })));
   chart_y.domain([minBidPrice, maxOfferPrice]);
   chart_x2.domain(chart_x.domain());
-  chart_volumeScale.domain([0, d3.max(data.map(function(d) {return d3.sum(d.bids, function (e,i){return e[1];});}))]);
+  chart_volumeScaleBids.domain([0, d3.max(data.map(function(d) {return d3.sum(d.bids, function (e,i){return e[1];});}))]);
+  chart_volumeScaleOffers.domain([0, d3.max(data.map(function(d) {return d3.sum(d.offers, function (e,i){return e[1];});}))]);
 
   context.selectAll(".bidarea").remove();
   context.selectAll(".offerarea").remove();
@@ -328,7 +340,6 @@ function update_chart(data, newdata) {
   for (var i = 0; i < newdata.length; i++) {
      console.log("Creating areas "+i+"/"+newdata.length);
 	   var d=newdata[i];
-	   var tick=.1;
 	   var timestampFrom=d.timestamp;
 	   var timestampTo=(newdata[i+1]?newdata[i+1].timestamp:timestampFrom);
 	   createAreas(d.bids, timestampFrom, timestampTo, tick, colorScale);
