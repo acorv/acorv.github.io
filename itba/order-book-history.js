@@ -16,7 +16,7 @@ var chart_x = d3.time.scale().range([0, chart_width]),
 
 var data_index=0;
 
-var tick=10;
+var tick=5;
 
 
 function chart_xAxis2() {return d3.svg.axis().scale(chart_x2).orient("bottom")};
