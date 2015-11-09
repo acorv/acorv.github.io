@@ -159,78 +159,13 @@ div.tooltip {
 <script type="text/javascript">
 
 
-//{"timestamp":"1444764425716","symbol":"DODic11A","BIDS":[[151001,30,4.0,10],[151007,40,4.0,10],[151008,50,4.0,1]],"OFFERS":[[151003,41,4.1,11]],"BIDS_AGREGADOS":[[4.0,21]],"OFFERS_AGREGADOS":[[4.1,11]]}
-
 var timeformat = d3.time.format("%H:%M:%S.%L");
-
-
-
-/*var data=[];
-var price=15;
-var tick=.1
-var t=1438868584836;
-for (var i=0; i<100; i++) {
-
-    var priceVariation=Math.random()>0.5?(Math.random()>0.5?tick:-tick):0;
-    var bidCount=Math.floor(Math.random()*1)+5;
-    var offerCount=Math.floor(Math.random()*1)+5;
-
-    var bids =[];
-    var bidorders=[];
-    price+=priceVariation;
-
-    var size=Math.floor(Math.random()*50)*100;
-    var totalSize=0;
-
-    for (var j=0; j<bidCount; j++) {
-      var p=price-((j+1)*tick);
-      p=Number(p.toFixed(2));
-      var size=(Math.floor(Math.random()*5)+1)*100;
-      var ordercount=Math.floor(Math.random()*10)+1;
-      var orders=[];
-      for (var h=0; h<ordercount; h++) {
-        size=(Math.floor(Math.random()*5)+1)*100;
-        totalSize+=size;
-        orders.push({id:1, size:size, account:"account"});
-      }
-      bids.push([p, totalSize]);
-      bidorders.push({price:p, side:'bid', orders:orders});
-    }
-
-    var offers = [];
-    var offerorders=[];
-    size=Math.floor(Math.random()*50)*100;
-    var totalSize=0;
-
-    for (var j=0; j<offerCount; j++) {
-      var p=price+((j+1)*tick);
-      p=Number(p.toFixed(2));
-      var size=(Math.floor(Math.random()*5)+1)*100;
-      var ordercount=Math.floor(Math.random()*10)+1;
-      var orders=[];
-      for (var h=0; h<ordercount; h++) {
-        size=(Math.floor(Math.random()*5)+1)*100;
-        totalSize+=size;
-        orders.push({id:1, size:size, account:"account"});
-      }
-      offers.push([p, totalSize]);
-      offerorders.push({price:p, side:'offer', orders:orders});
-    }
-
-    data.push({"timestamp":new Date(t), "bids":bids.reverse(),"offers":offers.reverse(), "bidorders":bidorders, "offerorders":offerorders});
-    //t=t+1000;
-    t=t+Math.floor(Math.random()*2000)+10000;
-}
-
-console.log("Created data...");
-console.log(JSON.stringify(data));
-*/
 
 for (var i=0; i<data.length; i++) {
   data[i].timestamp=new Date(data[i].timestamp);
 }
 
-var limit=data.length;
+var limit=100;
 var tick=5;
 
 var datachart=new datachart(tick);
@@ -263,14 +198,11 @@ datachart.chartclick = function(data) {
 }
 
 
-/*
-
 setInterval(function(){
     limit+=10 ;
     datachart.update_chart(data.slice(0,limit), false);
-    datachart.brushed();
-} , 5000);
-*/
+    datachart.update();
+} , 1000);
 
 
 
