@@ -1,0 +1,301 @@
+ <!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body {
+	background: #fff;
+	font: 12px sans-serif;
+}
+svg {
+	position: absolute;
+}
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #d0d0d0;
+}
+.x.axis .tick text {
+	font: 10px sans-serif;
+	fill: #555;
+}
+
+#rank {
+	font: 17px sans-serif;
+}
+#title {
+	font: 14px sans-serif;
+}
+
+#postInfo {
+	margin:0px;
+	height: 100px;
+	background: #fafafa;
+}
+#postInfoThumb {
+	float:left;
+	width:10%;
+	overflow:hidden;
+	text-align: right;
+	margin:10px;
+}
+#postInfoText {
+	float:left;
+	width:60%;
+	overflow:hidden;
+	text-align: left;
+	margin:10px;
+	line-height: 1.5;
+}
+#controls {
+	float:left;
+	width:10%;
+	overflow:hidden;
+	text-align: left;
+	margin:30px;
+}
+#subreddit {
+	font: 25px sans-serif;
+}
+#subredditTextField {
+	font: 25px sans-serif;
+}
+
+#thumb {
+	height: 80px;
+}
+#graph {
+ clear: left;
+}
+</style>
+<head>
+	<title>Reddit visualizer</title>
+</head>
+<body>
+<div id="postInfo">
+	<div id="controls">
+		<div id="subreddit" title="Click to change"></div>
+		<div id="subredditTextField">
+			r/<input type="text" id="subredditInput" />
+		</div>
+		<div id="interval" title="Click to change"></div>
+		<div id="intervalSelect">
+			Every
+      <select id="intervalInput">
+				<option value="60">1m</option>
+				<option value="300">5m</option>
+				<option value="600">10m</option>
+				<option value="1800">30m</option>
+			</select>
+		</div>
+	</div>
+	<div id="postInfoThumb">
+		<img id="thumb" />
+	</div>
+	<div id="postInfoText">
+		<div id="rank"></div>
+		<div id="title"></div>
+		<div id="origin"></div>
+	</div>
+
+</div>
+<div id="graph">
+	<svg></svg>
+</div>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+
+var duration = 60;
+var subreddit="all"
+var margin = {top: 40, right: 60, bottom: 30, left: 60};
+var width = window.innerWidth-50;
+var height = window.innerHeight-170 ;
+var devicePixelRatio = window.devicePixelRatio || 1;
+var samples = width/60;
+var topRank = Math.min(50, height/25);
+var colorIndex=0;
+var posts=d3.map();
+var interval;
+
+var svg = d3.select("svg")
+	.style("width", width + "px")
+	.style("height", height + "px");
+
+var color = d3.scaleOrdinal()
+	.range(["#DB7F85", "#50AB84", "#4C6C86", "#C47DCB", "#B59248", "#DD6CA7", "#E15E5A", "#5DA5B3", "#725D82", "#54AF52", "#954D56", "#8C92E8", "#D8597D", "#AB9C27", "#D67D4B", "#D58323", "#BA89AD", "#357468", "#8F86C2", "#7D9E33", "#517C3F", "#9D5130", "#5E9ACF", "#776327", "#944F7E"]);
+
+var timeRound = function(d) {
+	return d3.timeSecond.every(duration)(d);
+}
+
+var timeFormat = function(d) {
+	if (duration<60)
+		return d3.timeFormat("%H:%M:%S")(d);
+	else
+		return d3.timeFormat("%H:%M")(d);
+}
+
+var xscale = d3.scaleTime()
+	.domain([timeRound(Date.now() - samples*duration*1000), timeRound(Date.now())])
+	.range([margin.left,width-margin.right]);
+
+var xaxis = d3.axisBottom()
+	.scale(xscale)
+	.ticks(samples)
+	.tickFormat(timeFormat);
+
+var xaxis2 = d3.axisTop()
+	.scale(xscale)
+	.ticks(samples)
+	.tickFormat(timeFormat);
+
+var xaxisgraph=svg.append("g")
+	.attr("class", "x axis")
+	.attr("transform", "translate(0," + (height-margin.bottom+10) + ")")
+	.call(xaxis);
+
+var xaxis2graph=svg.append("g")
+	.attr("class", "x axis")
+	.attr("transform", "translate(0," + (margin.top-10) + ")")
+	.call(xaxis2);
+
+var yscale = d3.scaleLinear()
+	.domain([1,topRank])
+	.range([margin.top, height-margin.bottom]);
+
+var yaxis = d3.axisRight()
+	.scale(yscale)
+	.ticks(topRank)
+	.tickFormat(function(d) {return "#"+d});
+
+var yaxis2 = d3.axisLeft()
+	.scale(yscale)
+	.ticks(topRank)
+	.tickFormat(function(d) {return "#"+d});
+
+svg.append("g")
+	.attr("class", "y axis")
+	.attr("transform", "translate("+(width-margin.right+10) + ",0)")
+	.call(yaxis);
+
+svg.append("g")
+	.attr("class", "y axis")
+	.attr("transform", "translate("+(margin.left-10) + ",0)")
+	.call(yaxis2);
+
+var lineFunction = d3.line()
+	.x(function(d, i) { return xscale(d.time); })
+	.y(function(d, i) { return yscale(d.rank); }) ;
+var svgContainer = d3.select("body").append("svg")
+	.attr("width", width)
+	.attr("height", height);
+
+d3.select("#subreddit").on("click", function() {
+	d3.select("#subredditTextField").attr("hidden",null);
+	d3.select("#subreddit").attr("hidden",true);
+});
+d3.select("#interval").on("click", function() {
+	d3.select("#intervalSelect").attr("hidden",null);
+	d3.select("#interval").attr("hidden",true);
+});
+
+d3.select("#subredditTextField").on("change", function() {
+	d3.select("#subredditTextField").attr("hidden",false);
+	d3.select("#subreddit").attr("hidden",null);
+	subreddit=d3.select("#subredditInput").property("value");
+	reset();
+});
+d3.select("#intervalSelect").on("change", function() {
+	d3.select("#intervalSelect").attr("hidden",false);
+	d3.select("#interval").attr("hidden",null);
+	duration=d3.select("#intervalInput").property("value");
+	reset();
+});
+
+d3.select("#subredditTextField").attr("hidden",true);
+d3.select("#intervalSelect").attr("hidden",true);
+
+reset();
+
+function reset() {
+	if (interval) {
+		interval.stop();
+	}
+	d3.select("#subreddit").html("r/"+subreddit);
+	posts=d3.map();
+	svgContainer.selectAll("*").remove();
+	d3.select("#interval").html("Every "+duration/60+"m");
+	update();
+	interval = d3.interval(function () {update()}, duration*1000);
+}
+
+function update() {
+	var t=timeRound(Date.now());
+	var tfrom=timeRound(Date.now()-samples*duration*1000);
+	xscale.domain([tfrom, t]);
+
+	d3.json("https://www.reddit.com/r/"+subreddit+".json?limit=50").then(function(data) {
+		data.data.children.forEach(function(p, i) {
+				if (i<topRank-1) {
+				  if (!posts.get(p.data.name)) {
+					  p.data.ranks=[];
+					  p.data.color=color((colorIndex++%25));
+					  posts.set(p.data.name, p.data)
+				  }
+				  posts.get(p.data.name).ranks.push({"rank":i+1, "time":t});
+				}
+		});
+		posts.each(function(post,i) {
+			post.ranks=post.ranks.filter(function(rank) { return rank.time>=tfrom;});
+		});
+		updateGraph();
+	});
+}
+function updateGraph() {
+	xaxisgraph.call(xaxis);
+	xaxis2graph.call(xaxis2);
+	svgContainer.selectAll("*").remove();
+	posts.each(function(post,i) {
+		var lineGraph = svgContainer.append("path")
+			.attr("d", lineFunction(post.ranks))
+			.attr("stroke", post.color)
+			.attr("stroke-width", 4)
+			.attr("stroke-opacity", .3)
+			.attr("fill", "none");
+
+		post.ranks.forEach(function (d, j) {
+			var node = svgContainer.append("circle")
+			  .attr("cx", xscale(d.time))
+				.attr("cy", yscale(d.rank))
+				.attr("r", 5)
+				.attr("stroke", post.color)
+				.attr("stroke-width", 2)
+				.attr("stroke-opacity", .3)
+				.attr("fill", post.color)
+				.attr("fill-opacity", .2);
+			node.on("mouseover", function () {
+				lineGraph.attr("stroke-width", 4)
+				 .attr("stroke-opacity", 1);
+				node.attr("stroke-opacity", 1);
+				d3.select("#thumb").attr("src", (post.thumbnail.startsWith("http")?post.thumbnail:"blank.png"));
+				d3.select("#rank").html("#"+d.rank+" - "+(timeFormat(d.time)));
+				d3.select("#title").html(post.title);
+				d3.select("#origin").html(post.subreddit_name_prefixed);
+			});
+			node.on("mouseout", function () {
+				lineGraph.attr("stroke-width", 4)
+				 .attr("stroke-opacity", .2);
+				node.attr("stroke-opacity", .3);
+				d3.select("#thumb").attr("src", "blank.png");
+				d3.select("#rank").html("");
+				d3.select("#title").html("");
+				d3.select("#origin").html("");
+			});
+			node.on("click", function () {
+				window.open(
+					"https://www.reddit.com"+post.permalink, '_blank'
+				);
+			});
+		});
+	});
+}
+</script>
